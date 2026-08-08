@@ -1,0 +1,45 @@
+name: Build VoicePilot APK
+
+# This runs automatically on GitHub's free servers -- nothing installs
+# on your phone or computer. It builds the real .apk file for you.
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:   # lets you click a "Run workflow" button manually too
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.7"
+
+      - name: Build debug APK
+        run: gradle assembleDebug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: VoicePilot-apk
+          path: app/build/outputs/apk/debug/app-debug.apk
+
+      - name: Create direct-download release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: build-${{ github.run_number }}
+          name: VoicePilot build ${{ github.run_number }}
+          files: app/build/outputs/apk/debug/app-debug.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
